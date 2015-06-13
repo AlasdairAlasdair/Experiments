@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="custom.css">
+
+<body>
+  <div id="chart">
+  </div>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script type="text/javascript">
+    var w = 1200,
+        h = 800,
+        color = d3.scale.category20().domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  
+    var force = d3.layout.force()
+        .gravity(0)
+        .charge(-10)
+        .size([w, h]);
+  
+    var nodes = force.nodes();
+    var allTheNotes = [];
+    
+    for (var i = 0; i <= 11; i++){
+      var newNote = {type: i,  
+                     x: (i+1) *  w / 12, 
+                     y: 4 * h / 6, 
+                     fixed: true};
+      allTheNotes.push(newNote);
+      nodes.push(newNote);
+    }
+    
+    var svg = d3.select("#chart").append("svg:svg")
+        .attr("width", w)
+        .attr("height", h);
+  
+    svg.append("svg:rect")
+        .attr("width", w)
+        .attr("height", h);
+  
+    svg.selectAll("circle")
+        .data(nodes)
+      .enter().append("svg:circle")
+        .attr("r", 12)
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .style("fill", fill)
+        .call(force.drag);
+  
+    force.on("tick", function(e) {
+      var k = e.alpha * .1;
+      
+      nodes.forEach(function(node) {
+        var nodeType = node.type;
+        node.x += (allTheNotes[nodeType].x - node.x) * k;
+        node.y += (allTheNotes[nodeType].y - node.y) * k;
+        
+      });
+  
+      svg.selectAll("circle")
+          .attr("cx", function(d) { 
+            return d.x; 
+          })
+          .attr("cy", function(d) {          
+            return d.y; 
+          });
+    });
+  
+    svg.on("mousemove", function() {
+      var p0;
+      var p1 = d3.mouse(this),
+          newNode = {type: 
+                  (Math.random() * 12) | 0, 
+                   x: p1[0],
+                   y: p1[1], 
+                   px: (p0 || (p0 = p1))[0], 
+                   py: p0[1]};
+  
+      p0 = p1;
+  
+      svg.append("svg:circle")
+          .data([newNode])
+          .attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; })
+          .attr("r", 4.5)
+          .style("fill", fill)
+        .transition()
+          .delay(3000)
+          .attr("r", 1e-6)
+          .each("end", function() { nodes.splice(12, 1); })
+          .remove();
+  
+      nodes.push(newNode);
+      force.start();
+    });
+  
+    function fill(d) {
+      return color(d.type);
+    }
+  </script>
